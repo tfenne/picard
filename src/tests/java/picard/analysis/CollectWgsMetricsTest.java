@@ -101,6 +101,66 @@ public class CollectWgsMetricsTest extends CommandLineProgramTest {
         }
     }
 
+    @Test
+    public void testOnePos() throws IOException {
+        final File input = new File(TEST_DIR, "forMetrics.sam");
+        final File outfile = File.createTempFile("test", ".wgs_metrics");
+        final File ref = new File(TEST_DIR, "merger.fasta");
+        final File intervals = new File(TEST_DIR, "onePos.interval_list");
+        final int sampleSize = 1000;
+        outfile.deleteOnExit();
+        final String[] args = new String[] {
+                "INPUT="  + input.getAbsolutePath(),
+                "OUTPUT=" + outfile.getAbsolutePath(),
+                "REFERENCE_SEQUENCE=" + ref.getAbsolutePath(),
+                "INTERVALS=" + intervals.getAbsolutePath(),
+                "SAMPLE_SIZE=" + sampleSize
+        };
+        Assert.assertEquals(runPicardCommandLine(args), 0);
+
+        final MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>> output = new MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>>();
+        output.read(new FileReader(outfile));
+
+        for (final CollectWgsMetrics.WgsMetrics metrics : output.getMetrics()) {
+            Assert.assertEquals(metrics.GENOME_TERRITORY, 1);
+            Assert.assertEquals(metrics.MEAN_COVERAGE, 3.0);
+            Assert.assertEquals(metrics.PCT_EXC_MAPQ, 0.272727); // 3 of 11
+            Assert.assertEquals(metrics.PCT_EXC_DUPE, 0.181818); // 2 of 11
+            Assert.assertEquals(metrics.PCT_EXC_UNPAIRED, 0.090909); // 1 of 9
+            Assert.assertEquals(metrics.PCT_EXC_BASEQ, 0.090909); // 1 of 9
+            Assert.assertEquals(metrics.HET_SNP_SENSITIVITY, 0.34655, .02);
+        }
+    }
+
+    @Test
+    public void testContiguousIntervals() throws IOException {
+        final File input = new File(TEST_DIR, "forMetrics.sam");
+        final File outfile = File.createTempFile("test", ".wgs_metrics");
+        final File ref = new File(TEST_DIR, "merger.fasta");
+        final File intervals = new File(TEST_DIR, "contiguous.interval_list");
+        final int sampleSize = 1000;
+        outfile.deleteOnExit();
+        final String[] args = new String[] {
+                "INPUT="  + input.getAbsolutePath(),
+                "OUTPUT=" + outfile.getAbsolutePath(),
+                "REFERENCE_SEQUENCE=" + ref.getAbsolutePath(),
+                "INTERVALS=" + intervals.getAbsolutePath(),
+                "SAMPLE_SIZE=" + sampleSize
+        };
+        Assert.assertEquals(runPicardCommandLine(args), 0);
+
+        final MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>> output = new MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>>();
+        output.read(new FileReader(outfile));
+
+        for (final CollectWgsMetrics.WgsMetrics metrics : output.getMetrics()) {
+            Assert.assertEquals(metrics.GENOME_TERRITORY, 5);
+            Assert.assertEquals(metrics.MEAN_COVERAGE, 2.6);
+            Assert.assertEquals(metrics.PCT_EXC_MAPQ, 0.0);
+            Assert.assertEquals(metrics.PCT_EXC_DUPE, 0.066667);
+            Assert.assertEquals(metrics.HET_SNP_SENSITIVITY, 0.393802, .02);
+        }
+    }
+
     //create a samfile for testing.
     @BeforeTest
     void setupBuilder() throws IOException {

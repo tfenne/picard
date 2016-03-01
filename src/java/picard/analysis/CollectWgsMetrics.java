@@ -110,6 +110,9 @@ public class CollectWgsMetrics extends CommandLineProgram {
     @Option(doc="Sample Size used for Theoretical Het Sensitivity sampling. Default is 10000.", optional = true)
     public int SAMPLE_SIZE=10000;
 
+    @Option(shortName = "INTERVALS", doc = "An interval list file that contains the locations of the positions to assess. It is important that the sampled positions be chosen so that they are spread out at least further than a read's length apart; otherwise, you run the risk of double-counting reads in the metrics.", optional = true)
+    public File INTERVALS = null;
+
     private final Log log = Log.getInstance(CollectWgsMetrics.class);
     private static final double LOG_ODDS_THRESHOLD = 3.0;
 
@@ -350,10 +353,17 @@ public class CollectWgsMetrics extends CommandLineProgram {
     }
 
     protected long getBasesExcludedBy(final CountingFilter filter) {
+        if(INTERVALS != null){
+            return filter.getFilteredRecords();
+        }
         return filter.getFilteredBases();
     }
 
     protected SamLocusIterator getLocusIterator(final SamReader in) {
+        if(INTERVALS != null){
+            IOUtil.assertFileIsReadable(INTERVALS);
+            return new SamLocusIterator(in, IntervalList.fromFile(INTERVALS));
+        }
         return new SamLocusIterator(in);
     }
 }
