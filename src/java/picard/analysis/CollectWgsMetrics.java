@@ -110,7 +110,10 @@ public class CollectWgsMetrics extends CommandLineProgram {
     @Option(doc="Sample Size used for Theoretical Het Sensitivity sampling. Default is 10000.", optional = true)
     public int SAMPLE_SIZE=10000;
 
-    @Option(shortName = "INTERVALS", doc = "An interval list file that contains the locations of the positions to assess. It is important that the sampled positions be chosen so that they are spread out at least further than a read's length apart; otherwise, you run the risk of double-counting reads in the metrics.", optional = true)
+    @Option(shortName = "INTERVALS", doc = "An interval list file that contains the locations of the positions to assess. It is important that " +
+            "the intervals be chosen so that they are spread out at least further than a read's length apart; otherwise, you run the risk of " +
+            "double-counting reads in the metrics. Metrics are only calculated at those bases at positions in the list, not across the entire read.",
+            optional = true)
     public File INTERVALS = null;
 
     private final Log log = Log.getInstance(CollectWgsMetrics.class);
@@ -189,6 +192,9 @@ public class CollectWgsMetrics extends CommandLineProgram {
         IOUtil.assertFileIsReadable(INPUT);
         IOUtil.assertFileIsWritable(OUTPUT);
         IOUtil.assertFileIsReadable(REFERENCE_SEQUENCE);
+        if (INTERVALS != null) {
+            IOUtil.assertFileIsReadable(INTERVALS);
+        }
 
         // it doesn't make sense for the locus accumulation cap to be lower than the coverage cap
         if (LOCUS_ACCUMULATION_CAP < COVERAGE_CAP) {
@@ -352,19 +358,18 @@ public class CollectWgsMetrics extends CommandLineProgram {
         return new WgsMetrics();
     }
 
+    /**
+     * By design, if an INTERVALS file is provided, we want to count just those bases at the positions we care about,
+     * not across the entire read. Therefore, we call filter.getFilteredRecords() so that only the bases in the pileup
+     * at a given position are included in the calculations (with filter.getFilteredBases() we would be including other
+     * bases in the read too).
+     */
     protected long getBasesExcludedBy(final CountingFilter filter) {
-        if(INTERVALS != null){
-            return filter.getFilteredRecords();
-        }
-        return filter.getFilteredBases();
+        return (INTERVALS != null) ? filter.getFilteredRecords() : filter.getFilteredBases();
     }
 
     protected SamLocusIterator getLocusIterator(final SamReader in) {
-        if(INTERVALS != null){
-            IOUtil.assertFileIsReadable(INTERVALS);
-            return new SamLocusIterator(in, IntervalList.fromFile(INTERVALS));
-        }
-        return new SamLocusIterator(in);
+        return (INTERVALS != null) ? new SamLocusIterator(in, IntervalList.fromFile(INTERVALS)) : new SamLocusIterator(in);
     }
 }
 

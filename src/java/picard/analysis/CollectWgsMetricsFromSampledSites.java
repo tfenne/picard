@@ -44,5 +44,5 @@ import picard.cmdline.programgroups.Alpha;
         usageShort = "Writes whole genome sequencing-related metrics for a SAM or BAM file",
         programGroup = Alpha.class
 )
-@Deprecated // use CollectWgsMetrics with INTERVAL argument instead
+@Deprecated // use CollectWgsMetrics with INTERVALS argument instead
 public class CollectWgsMetricsFromSampledSites extends CollectWgsMetrics {}
