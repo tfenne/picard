@@ -49,12 +49,52 @@ import java.util.List;
 import java.util.Set;
 
 @CommandLineProgramProperties(
-        usage = "Collect metrics about the alignment of RNA to various functional classes of loci in the genome:" +
-                "coding, intronic, UTR, intergenic, ribosomal. Also determines strand-specificity for strand-specific libraries.",
-        usageShort = "Produces RNA alignment metrics for a SAM or BAM file",
+        usage = CollectRnaSeqMetrics.USAGE_SUMMARY + CollectRnaSeqMetrics.USAGE_DETAILS,
+        usageShort = CollectRnaSeqMetrics.USAGE_SUMMARY,
         programGroup = Metrics.class
 )
 public class CollectRnaSeqMetrics extends SinglePassSamProgram {
+
+    static final String USAGE_SUMMARY = "Produces RNA alignment metrics for a SAM or BAM file.  ";
+    static final String USAGE_DETAILS = "<p>This tool takes a SAM/BAM file containing aligned RNA transcripts and produces metrics describing the distribution " +
+            "of the bases within the transcripts.  Calculates the total numbers and the percentages of nucleotides within the transcript sub-domains" +
+            " including the untranslated region (UTR), introns, intergenic sequences (between discrete genes) and peptide-coding sequences.  " +
+            "This tool also determines the numbers of bases that pass the sequencing vendor's quality filters (PF_BASES). " +
+            "To learn more about the PF metric, please see the corresponding GATK " +
+            "<a href='https://www.broadinstitute.org/gatk/guide/article?id=6329'><b>dictionary entry</b></a>.</p>" +
+            "" +
+            "<p>Other metrics include the median coverage (depth), 5'/3'-biases, and the numbers of reads with the correct/incorrect " +
+            "strand designation. The 5'/3'-biases represent the bias introduced by reverse transcriptase enzymes during library construction, which" +
+            " result in the over representation of either the 5 or 3' ends of transcripts.  Please see the following " +
+            "<a href=\"https://www.biostars.org/p/102812/#102815\"><b>link</b></a> for information on how this ratio is calculated. </p>" +
+            "" +
+            "<p>The input must be a valid BAM file containing RNAseq data aligned using e.g. <a href=\"http://github.com/alexdobin/STAR\"><b>STAR</b></a>" +
+            " or <a href=\"http://ccb.jhu.edu/software/tophat/index.shtml\"><b>TopHat</b></a>.  BAM files can be validated using Picard's " +
+            "<a href=\"http://broadinstitute.github.io/picard/command-line-overview.html#ValidateSamFile\"><b>ValidateSamFile</b></a> tool.  </p>" +
+            "" +
+            "<p>CollectRnaSeqMetrics requires a REF_FLAT file, a tab-delimited file containing information about the location of" +
+            " RNA transcripts, exon start and stop sites, etc. For more information on REF_FLAT format, see the following " +
+            " <a href=\"http://genome.ucsc.edu/goldenPath/gbdDescriptionsOld.html#RefFlat\"><b>description</b></a>.  In addition, build-specific REF_FLAT files can be obtained " +
+            "<a href=\"http://hgdownload.cse.ucsc.edu/goldenPath/\"><b>here</b></a>.</p>"+
+
+            "<pre>" +
+            "<h4>Usage example:</h4>" +
+            "java -jar picard.jar CollectRnaSeqMetrics \\<br />" +
+            "      I=input.bam \\<br />" +
+            "      O=output.RNA_Metrics \\<br />" +
+            "      REF_FLAT=ref_flat.txt \\<br />" +
+            "      STRAND=SECOND_READ_TRANSCRIPTION_STRAND \\<br />" +
+            "      RIBOSOMAL_INTERVALS=ribosomal.interval_list <br />" +
+            "</pre>" +
+            "<p>This tool will calculate the numbers/percentages of ribosomal bases if a ribosomal sequence interval file is included on the command line." +
+            "The following site contains a ribosomal sequence interval list for the <a href=\"http://gist.github.com/slowkow/b11c28796508f03cdf4b\"><b>Hg19</b></a> genomic build.  " +
+            "Note, you can cut and paste the contents of this file into a text editor to create your own interval file.  " +
+            "Moreover, if you are not using the Hg19 build, you can use Picard's <a href=\"http://broadinstitute.github.io/picard/command-line-overview.html#LiftOverIntervalList\"><b>LiftOverIntervalList</b></a> " +
+            "tool to transform the file to the genomic build of your choice.  " +
+
+            "<p>For a complete description of the output metrics, please see this " +
+            "<a href=\"http://broadinstitute.github.io/picard/picard-metric-definitions.html'>metrics definitions\"><b>page</b></a>.</p>" +
+            "<hr />";
     private static final Log LOG = Log.getInstance(CollectRnaSeqMetrics.class);
 
     @Option(doc="Gene annotations in refFlat form.  Format described here: http://genome.ucsc.edu/goldenPath/gbdDescriptionsOld.html#RefFlat")

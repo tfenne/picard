@@ -45,14 +45,48 @@ import java.util.TreeSet;
  * @author Tim Fennell
  */
 @CommandLineProgramProperties(
-        usage = "Collects a set of Hybrid Selection specific metrics from an aligned SAM" +
-                "or BAM file. If a reference sequence is provided, AT/GC dropout metrics will " +
-                "be calculated, and the PER_TARGET_COVERAGE option can be used to output GC and " +
-                "mean coverage information for every target.",
-        usageShort = "Collects Hybrid Selection-specific metrics for a SAM or BAM file",
+        usage = CollectHsMetrics.USAGE_SUMMARY + CollectHsMetrics.USAGE_DETAILS,
+        usageShort = CollectHsMetrics.USAGE_SUMMARY,
         programGroup = Metrics.class
 )
 public class CollectHsMetrics extends CollectTargetedMetrics<HsMetrics, HsMetricCollector> {
+        static final String USAGE_SUMMARY = "Collects hybrid-selection (HS) specific metrics for a SAM or BAM file.  ";
+        static final String USAGE_DETAILS = "<p>These metrics enable users to determine the efficacy and quality of HS experiments.</p>  " +
+                "" +
+                "<p>Hybrid selection enables users to target and sequence specific regions of a genome.  It is commonly used to characterize exon sequences" +
+                " from genomic DNA or filter out contaminating bacterial DNA sequences from clinical samples.  For additional information " +
+                "and the theory behind this technique, please see the following " +
+                "<a href=\"http://gatkforums.broadinstitute.org/gatk/discussion/6331/hybrid-selection\"><b>dictionary</b></a> link.</p>" +
+                "" +
+                "<p>Both CollectTargetedPcrMetrics and CollectHsMetrics share virtually identical program structures except " +
+                "for the name of their targeting mechanisms; amplicon- and bait-sets respectively.  Both collect metrics using the TargetMetricsCollector " +
+                "on all reads in the INPUT SAM/BAM file.</p> " +
+                "" +
+                "<p>This tool requires an aligned SAM or BAM file as well as bait and target interval files.  These interval files can be created using Picard's " +
+                "<a href=\"http://broadinstitute.github.io/picard/command-line-overview.html#BaitDesigner\"><b>BaitDesigner</b></a> tool.</p>" +
+                "" +
+                "If a reference sequence is provided, this program will calculate both AT_DROPOUT and GC_DROPOUT metrics.  " +
+                "These metrics indicate the numbers of reads with excessive AT- or GC-rich regions that prevent mapping/alignment to the reference" +
+                " and are consequently dropped from the analysis." +
+                "" +
+                "<p>The PER_TARGET_COVERAGE option can be invoked to output GC content and mean sequence depth information for every target interval." +
+                "</p>" +
+                "" +
+                "<p>Please note that coverage depth at each locus should not exceed a limit of java MAX_SHORT ~32K.  This is because the " +
+                "CollectHsMetrics (and the CollectTargetedPcrMetrics) tool, use a short array (as in short []) to calculate coverage metrics.</p>  "+
+
+                "<h4>Usage Example:</h4>"+
+                "<pre>" +
+                "java -jar picard.jar CollectHsMetrics \\<br />" +
+                "      I=input.bam \\<br />" +
+                "      O=hs_metrics.txt \\<br />" +
+                "      R=reference_sequence.fasta \\<br />" +
+                "      BAIT_INTERVALS=bait.interval_list \\<br />" +
+                "      TARGET_INTERVALS=target.interval_list" +
+                "</pre> "   +
+                "<p>This tool provides multiple outputs that are described in detail " +
+                "<a href=\"http://broadinstitute.github.io/picard/picard-metric-definitions.html#HsMetrics\"><b>here</b></a>.</p> "+
+                "<hr />";
 
     @Option(shortName = "BI", doc = "An interval list file that contains the locations of the baits used.", minElements=1)
     public List<File> BAIT_INTERVALS;
