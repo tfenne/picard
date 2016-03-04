@@ -110,11 +110,11 @@ public class CollectWgsMetrics extends CommandLineProgram {
     @Option(doc="Sample Size used for Theoretical Het Sensitivity sampling. Default is 10000.", optional = true)
     public int SAMPLE_SIZE=10000;
 
-    @Option(shortName = "INTERVALS", doc = "An interval list file that contains the locations of the positions to assess. It is important that " +
-            "the intervals be chosen so that they are spread out at least further than a read's length apart; otherwise, you run the risk of " +
-            "double-counting reads in the metrics. Metrics are only calculated at those bases at positions in the list, not across the entire read.",
+    @Option(shortName = "LARGE_INTERVALS", doc = "An interval list file that contains contig-sized locations of the positions to assess. It is important that " +
+            "the intervals be chosen so that they won't have overlapping reads that extend beyond the boundaries of the interval. For smaller sites use " +
+            "CollectWgsMetricsFromSampledSites.",
             optional = true)
-    public File INTERVALS = null;
+    public File LARGE_INTERVALS = null;
 
     private final Log log = Log.getInstance(CollectWgsMetrics.class);
     private static final double LOG_ODDS_THRESHOLD = 3.0;
@@ -192,8 +192,8 @@ public class CollectWgsMetrics extends CommandLineProgram {
         IOUtil.assertFileIsReadable(INPUT);
         IOUtil.assertFileIsWritable(OUTPUT);
         IOUtil.assertFileIsReadable(REFERENCE_SEQUENCE);
-        if (INTERVALS != null) {
-            IOUtil.assertFileIsReadable(INTERVALS);
+        if (LARGE_INTERVALS != null) {
+            IOUtil.assertFileIsReadable(LARGE_INTERVALS);
         }
 
         // it doesn't make sense for the locus accumulation cap to be lower than the coverage cap
@@ -359,17 +359,15 @@ public class CollectWgsMetrics extends CommandLineProgram {
     }
 
     /**
-     * By design, if an INTERVALS file is provided, we want to count just those bases at the positions we care about,
-     * not across the entire read. Therefore, we call filter.getFilteredRecords() so that only the bases in the pileup
-     * at a given position are included in the calculations (with filter.getFilteredBases() we would be including other
-     * bases in the read too).
+     * If LARGE_INTERVALS is specified, this will count bases beyond the interval list when the read overlaps the intervals and extends beyond the
+     * edge. LARGE_INTERVALS should only include regions that have hard edges without reads that could extend beyond the boundary (such as a whole contig).
      */
     protected long getBasesExcludedBy(final CountingFilter filter) {
-        return (INTERVALS != null) ? filter.getFilteredRecords() : filter.getFilteredBases();
+        return filter.getFilteredBases();
     }
 
     protected SamLocusIterator getLocusIterator(final SamReader in) {
-        return (INTERVALS != null) ? new SamLocusIterator(in, IntervalList.fromFile(INTERVALS)) : new SamLocusIterator(in);
+        return (LARGE_INTERVALS != null) ? new SamLocusIterator(in, IntervalList.fromFile(LARGE_INTERVALS)) : new SamLocusIterator(in);
     }
 }
 
