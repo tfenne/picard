@@ -184,7 +184,7 @@ public class CollectWgsMetricsTest extends CommandLineProgramTest {
                 "INPUT="  + input.getAbsolutePath(),
                 "OUTPUT=" + outfile.getAbsolutePath(),
                 "REFERENCE_SEQUENCE=" + ref.getAbsolutePath(),
-                "LARGE_INTERVALS=" + intervals.getAbsolutePath(),
+                "INTERVALS=" + intervals.getAbsolutePath(),
                 "SAMPLE_SIZE=" + sampleSize
         };
         Assert.assertEquals(runPicardCommandLine(args), 0);

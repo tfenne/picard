@@ -101,4 +101,36 @@ public class CollectWgsMetricsFromSampledSitesTest extends CommandLineProgramTes
             Assert.assertEquals(metrics.HET_SNP_SENSITIVITY, 0.393802, .02);
         }
     }
+
+    /*
+     * Same as testLargeIntervals in CollectWgsMetricsTest, in order to make sure the results from this tool are different from running
+     * CollectWgsMetrics with the same INTERVALS list.
+     */
+    @Test
+    public void testLargeIntervals() throws IOException {
+        final File input = new File(TEST_DATA_DIR, "forMetrics.sam");
+        final File outfile = File.createTempFile("test", ".wgs_metrics");
+        final File ref = new File(TEST_DATA_DIR, "merger.fasta");
+        final File intervals = new File(TEST_DATA_DIR, "largeIntervals.interval_list");
+        final int sampleSize = 1000;
+        outfile.deleteOnExit();
+        final String[] args = new String[] {
+                "INPUT="  + input.getAbsolutePath(),
+                "OUTPUT=" + outfile.getAbsolutePath(),
+                "REFERENCE_SEQUENCE=" + ref.getAbsolutePath(),
+                "INTERVALS=" + intervals.getAbsolutePath(),
+                "SAMPLE_SIZE=" + sampleSize
+        };
+        Assert.assertEquals(runPicardCommandLine(args), 0);
+
+        final MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>> output = new MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>>();
+        output.read(new FileReader(outfile));
+
+        for (final CollectWgsMetrics.WgsMetrics metrics : output.getMetrics()) {
+            Assert.assertEquals(metrics.GENOME_TERRITORY, 404);
+            Assert.assertNotEquals(metrics.PCT_EXC_MAPQ, 0.271403);
+            Assert.assertNotEquals(metrics.PCT_EXC_DUPE, 0.182149);
+            Assert.assertNotEquals(metrics.PCT_EXC_UNPAIRED, 0.091075);
+        }
+    }
 }
