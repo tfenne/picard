@@ -361,7 +361,7 @@ public class CollectWgsMetrics extends CommandLineProgram {
 
     /**
      * If INTERVALS is specified, this will count bases beyond the interval list when the read overlaps the intervals and extends beyond the
-     * edge. INTERVALS should only include regions that have hard edges without reads that could extend beyond the boundary (such as a whole contig).
+     * edge. Ideally INTERVALS should only include regions that have hard edges without reads that could extend beyond the boundary (such as a whole contig).
      */
     protected long getBasesExcludedBy(final CountingFilter filter) {
         return filter.getFilteredBases();

@@ -27,6 +27,7 @@ import htsjdk.samtools.metrics.MetricsFile;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import picard.cmdline.CommandLineProgramTest;
+import picard.cmdline.PicardCommandLine;
 
 import java.io.File;
 import java.io.FileReader;
@@ -103,8 +104,7 @@ public class CollectWgsMetricsFromSampledSitesTest extends CommandLineProgramTes
     }
 
     /*
-     * Same as testLargeIntervals in CollectWgsMetricsTest, in order to make sure the results from this tool are different from running
-     * CollectWgsMetrics with the same INTERVALS list.
+     * Tests the same inputs for CollectWgsMetrics vs CollectWgsMetricsFromSampledSites in order to make sure the results are different.
      */
     @Test
     public void testLargeIntervals() throws IOException {
@@ -126,11 +126,29 @@ public class CollectWgsMetricsFromSampledSitesTest extends CommandLineProgramTes
         final MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>> output = new MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>>();
         output.read(new FileReader(outfile));
 
+        final File collectWgsOutfile = File.createTempFile("collectWgsMetrics.test", ".wgs_metrics");
+        collectWgsOutfile.deleteOnExit();
+        final String[] collectWgsMetricsArgs = new String[] {
+                "INPUT=" + input.getAbsolutePath(),
+                "OUTPUT=" + collectWgsOutfile.getAbsolutePath(),
+                "REFERENCE_SEQUENCE=" + ref.getAbsolutePath(),
+                "INTERVALS=" + intervals.getAbsolutePath(),
+                "SAMPLE_SIZE=" + sampleSize
+        };
+
+        CollectWgsMetrics collectWgsMetrics = new CollectWgsMetrics();
+        collectWgsMetrics.instanceMain(collectWgsMetricsArgs);
+
+        final MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>> collectWgsMetricsOutput = new MetricsFile<CollectWgsMetrics.WgsMetrics, Comparable<?>>();
+        collectWgsMetricsOutput.read(new FileReader(collectWgsOutfile));
+
         for (final CollectWgsMetrics.WgsMetrics metrics : output.getMetrics()) {
             Assert.assertEquals(metrics.GENOME_TERRITORY, 404);
-            Assert.assertNotEquals(metrics.PCT_EXC_MAPQ, 0.271403);
-            Assert.assertNotEquals(metrics.PCT_EXC_DUPE, 0.182149);
-            Assert.assertNotEquals(metrics.PCT_EXC_UNPAIRED, 0.091075);
+            for (final CollectWgsMetrics.WgsMetrics collectWgsMetricsOut : collectWgsMetricsOutput.getMetrics()) {
+                Assert.assertNotEquals(metrics.PCT_EXC_MAPQ, collectWgsMetricsOut.PCT_EXC_MAPQ);
+                Assert.assertNotEquals(metrics.PCT_EXC_DUPE, collectWgsMetricsOut.PCT_EXC_DUPE);
+                Assert.assertNotEquals(metrics.PCT_EXC_UNPAIRED, collectWgsMetricsOut.PCT_EXC_UNPAIRED);
+            }
         }
     }
 }
